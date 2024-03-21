@@ -10,7 +10,6 @@ const authUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body
     const user = await User.findOne({ email })
 
-
     if (user && (await user.matchPassword(password))) {
         generateToken(res, user._id)
         res.status(201).json({
@@ -60,7 +59,12 @@ const registerUser = asyncHandler(async (req, res) => {
 // route    POST /api/users/logout
 // @access  PUBLIC
 const logoutUser = asyncHandler(async (req, res) => {
-    res.status(200).json({ message: 'Logout User' })
+    res.cookie('jwt', '', {
+        httpOnly: true,
+        expires: new Date(0)
+    })
+
+    res.status(200).json({ message: 'User Logged Out' })
 })
 
 // @desc    Get User profile
