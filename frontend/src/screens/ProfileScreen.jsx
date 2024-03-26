@@ -6,6 +6,7 @@ import FormContainer from '../components/FormContainer'
 import { toast } from 'react-toastify'
 import Loader from "../components/Loader";
 import { setCredentials } from "../slices/authSlice";
+import { useUpdateUserMutation } from "../slices/usersApiSlice";
 
 
 const ProfileScreen = () => {
@@ -17,7 +18,9 @@ const ProfileScreen = () => {
 
     const navigate = useNavigate()
     const dispatch = useDispatch()
+
     const { userInfo } = useSelector((state) => state.auth)
+    const [updateProfile, { isLoading }] = useUpdateUserMutation();
 
     useEffect(() => {
         setName(userInfo.name);
@@ -25,13 +28,24 @@ const ProfileScreen = () => {
     }, [userInfo.setName, userInfo.setEmail]);
 
     const submitHandler = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
         if (password !== confirmPassword) {
-            toast.error('Passwords do not match')
+            toast.error('Passwords do not match');
         } else {
-            console.log("submit")
+            try {
+                const res = await updateProfile({
+                    _id: userInfo._id,
+                    name,
+                    email,
+                    password,
+                }).unwrap();
+                dispatch(setCredentials({ ...res }));
+                toast.success('Profile updated successfully');
+            } catch (err) {
+                toast.error(err?.data?.message || err.error);
+            }
         }
-    }
+    };
 
     return (
         <FormContainer>
@@ -78,6 +92,8 @@ const ProfileScreen = () => {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                     ></Form.Control>
                 </Form.Group>
+
+                {isLoading && <Loader />}
 
                 <Button type="submit" variant="primary" className="mt-3">
                     Update
